@@ -38,6 +38,7 @@ docker run -p 8080:80 vpn-visualizer
 - AWS-aware options: Client VPN, Site-to-Site, and sidecar targets with VPC/subnet/SG/CIDR callouts
 - Config preview/export: copy-ready snippets for AWS Client VPN, Site-to-Site runbooks, sidecars, or WireGuard
 - Local persistence (settings, AWS fields, theme) stored in the browser for demos
+- Partner/hospital site-to-site storytelling: planned content to show how vendors connect without exposing the hospital to the public internet
 
 ## Project structure
 
@@ -70,3 +71,4 @@ This uses Playwright to switch targets/protocols, click Connect, and capture `te
 4) Add documentation generation (MDX/Docs site) describing flows and APIs.  
 5) Integrate AWS metadata (Client VPN, Site-to-Site/TGW) and export configs.  
 6) Swap simulated telemetry for real CloudWatch/agent feeds and support downloads of generated configs.  
+7) Add hospital/vendor site-to-site playbooks: route scoping, allowed CIDRs, and diagnostics that keep hospitals off the public internet.  

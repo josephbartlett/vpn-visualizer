@@ -17,6 +17,7 @@
 - [ ] Add glossary expansions and inline tooltips tied to steps.
 - [ ] AWS metadata fetch: Client VPN endpoints, Site-to-Site/TGW associations, SGs, route tables (stubbed today).
 - [ ] AWS export: generate OpenVPN profiles for Client VPN and IPsec runbooks for Site-to-Site (download-ready).
+- [ ] Partner/hospital site-to-site module: templates for vendor ↔ hospital tunnels with scoped CIDRs and explanatory diagrams.
 
 ## Phase 3 – Backend integration
 - [ ] Wire real telemetry from WireGuard/OpenVPN daemons to metrics panel.

@@ -8,3 +8,4 @@
 - Support AWS-first scenarios (Client VPN, Site-to-Site, sidecars) with callouts for VPC/subnet/SG/routing.
 - Ship copy-ready config previews and simple persistence so demos feel real without backend wiring.
 - Maintain readable contrast for dark backgrounds across devices.
+- Explain partner/hospital VPN scenarios (vendor ↔ hospital) with clear route scoping so hospitals avoid public internet exposure.

@@ -1008,7 +1008,6 @@ function NetworkMap({ connected, region, protocol, animationSpeed, deploymentTar
           <path id="path-to-cloud-b" d="M48 18 C 64 22, 72 26, 86 32" />
         </defs>
         <circle cx="12" cy="30" r="3.5" className="node-svg node-local" />
-        <circle cx="48" cy="18" r="4" className="node-svg node-gateway" />
         <circle cx="82" cy="12" r="3" className="node-svg node-cloud" />
         <circle cx="86" cy="32" r="3" className="node-svg node-cloud" />
         <path d="M12 30 C 30 24, 34 22, 48 18" className={arcClass} stroke="url(#tunnel)" />

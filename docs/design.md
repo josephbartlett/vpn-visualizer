@@ -53,3 +53,4 @@
 - Replace simulated metrics with telemetry from VPN daemons (WireGuard/OpenVPN) or CloudWatch for AWS VPNs.
 - Add diagnostics that run real checks (MTU discovery, DNS leak test, port reachability).
 - Export/share configs as files or QR codes for mobile onboarding.
+- Partner/hospital site-to-site: include presets and diagrams for vendor ↔ hospital tunnels with scoped CIDRs and no public ingress.
