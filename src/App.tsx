@@ -27,6 +27,15 @@ type Metrics = {
   loss: number
 }
 
+type DeploymentTarget = {
+  id: DeploymentTargetId
+  name: string
+  summary: string
+  notes: string
+}
+
+type DeploymentTargetId = 'custom' | 'aws-client-vpn' | 'aws-site-to-site' | 'aws-sidecar'
+
 const protocolCatalog: Protocol[] = [
   {
     id: 'wireguard',
@@ -64,6 +73,30 @@ const protocolCatalog: Protocol[] = [
     ports: 'UDP 500 / 4500',
     bestFor: 'Phones, tablets, quick failover',
   },
+  {
+    id: 'aws-client-vpn',
+    name: 'AWS Client VPN (OpenVPN)',
+    summary: 'Managed AWS endpoint for user/device access.',
+    description:
+      'AWS-managed OpenVPN service. Integrates with VPC subnets, security groups, and directory/SSO options.',
+    speed: 'Balanced',
+    security: 'AES-256-GCM, cert or SSO auth via IAM/AD',
+    compatibility: 'OpenVPN clients; works with AWS CLI/SSO flows',
+    ports: 'UDP/TCP 443',
+    bestFor: 'Hybrid remote access with AWS identity',
+  },
+  {
+    id: 'aws-site-to-site',
+    name: 'AWS Site-to-Site (IPsec)',
+    summary: 'Attach on-prem to AWS VPC/TGW with IPsec.',
+    description:
+      'Traditional IPsec tunnel for connecting data centers to AWS VPCs or Transit Gateways. High-availability via multi-AZ endpoints.',
+    speed: 'Balanced',
+    security: 'IPsec (AES-GCM), BGP/route-based',
+    compatibility: 'Routers/firewalls supporting IPsec+BGP',
+    ports: 'UDP 500 / 4500',
+    bestFor: 'Branch/VPC interconnects and sidecars',
+  },
 ]
 
 const regionOptions: Region[] = [
@@ -72,6 +105,33 @@ const regionOptions: Region[] = [
   { id: 'sin', name: 'Singapore', latency: 183, load: 0.51, country: 'Singapore' },
   { id: 'syd', name: 'Sydney', latency: 212, load: 0.38, country: 'Australia' },
   { id: 'sao', name: 'São Paulo', latency: 145, load: 0.46, country: 'Brazil' },
+]
+
+const deploymentTargets: DeploymentTarget[] = [
+  {
+    id: 'custom',
+    name: 'Custom / on-prem',
+    summary: 'Self-hosted VPN gateways on metal or cloud instances.',
+    notes: 'Use when managing your own WireGuard/OpenVPN fleet.',
+  },
+  {
+    id: 'aws-client-vpn',
+    name: 'AWS Client VPN',
+    summary: 'AWS-managed OpenVPN endpoint for workforce access.',
+    notes: 'Attach to subnets and security groups; supports SSO/AD and split tunneling.',
+  },
+  {
+    id: 'aws-site-to-site',
+    name: 'AWS Site-to-Site',
+    summary: 'IPsec tunnels for VPC/TGW connectivity.',
+    notes: 'Great for Navina sidecars or hybrid branch links.',
+  },
+  {
+    id: 'aws-sidecar',
+    name: 'AWS Sidecar',
+    summary: 'Service-to-service tunnels riding alongside apps.',
+    notes: 'Place sidecar with ECS/EKS tasks; route via VPC endpoints.',
+  },
 ]
 
 const glossary = [
@@ -93,6 +153,11 @@ function App() {
   const [connectionName, setConnectionName] = useState('Training Lab Tunnel')
   const [authMethod, setAuthMethod] = useState<'credentials' | 'keys'>('credentials')
   const [username, setUsername] = useState('analyst')
+  const [deploymentTarget, setDeploymentTarget] = useState<DeploymentTargetId>('aws-client-vpn')
+  const [awsVpcId, setAwsVpcId] = useState('vpc-0abc1234')
+  const [awsSubnet, setAwsSubnet] = useState('subnet-0ff45e2a')
+  const [awsSecurityGroup, setAwsSecurityGroup] = useState('sg-0d931ac1')
+  const [awsCidr, setAwsCidr] = useState('10.20.0.0/16')
   const [selectedRegion, setSelectedRegion] = useState('ams')
   const [selectedProtocol, setSelectedProtocol] = useState('wireguard')
   const [activeStep, setActiveStep] = useState(0)
@@ -106,6 +171,11 @@ function App() {
   const selectedProtocolInfo = useMemo(
     () => protocolCatalog.find((p) => p.id === selectedProtocol) ?? protocolCatalog[0],
     [selectedProtocol],
+  )
+
+  const selectedTargetInfo = useMemo(
+    () => deploymentTargets.find((t) => t.id === deploymentTarget) ?? deploymentTargets[0],
+    [deploymentTarget],
   )
 
   const selectedRegionInfo = useMemo(
@@ -136,12 +206,30 @@ function App() {
     setActiveStep(wizardSteps.length - 1)
     setImportedConfig(false)
     setIsConnected(true)
-    setDiagnostics([
+    const base = [
       '✅ Key exchange succeeded (Curve25519) in 63ms.',
       '✅ Gateway responds over UDP 51820.',
       '✅ VPN DNS reachable, no leaks detected.',
       'ℹ️ Suggested MTU 1420 for this path.',
-    ])
+    ]
+    const awsExtras =
+      deploymentTarget === 'aws-client-vpn'
+        ? [
+            `✅ VPC ${awsVpcId} attached; SG ${awsSecurityGroup} allows 443.`,
+            `ℹ️ Subnet ${awsSubnet} advertises ${awsCidr} with split tunnel enabled.`,
+          ]
+        : deploymentTarget === 'aws-site-to-site'
+          ? [
+              `✅ IPsec phase 1/2 established; CIDR ${awsCidr} routed.`,
+              `ℹ️ BGP neighbor up on ${selectedRegionInfo.name}; check TGW propagation.`,
+            ]
+          : deploymentTarget === 'aws-sidecar'
+            ? [
+                '✅ Sidecar ready for ECS/EKS task attachment.',
+                'ℹ️ Ensure ENI has SGs permitting app→sidecar traffic.',
+              ]
+            : []
+    setDiagnostics([...awsExtras, ...base])
   }
 
   const handleImport = () => {
@@ -152,12 +240,31 @@ function App() {
   }
 
   const runTroubleshoot = () => {
-    setDiagnostics([
+    const base = [
       '✅ Auth endpoint reachable.',
       '✅ Certificate chain valid.',
       '⚠️ High latency upstream (212ms). Consider closer region.',
       '⚠️ UDP 1194 blocked by firewall. Try TCP/443 fallback.',
-    ])
+    ]
+    const awsSpecific =
+      deploymentTarget === 'aws-client-vpn'
+        ? [
+            '⚠️ Verify SG allows 443 from clients to endpoint.',
+            'ℹ️ Ensure split tunnel matches advertised routes.',
+            'ℹ️ Directory/SSO mapping required for user auth.',
+          ]
+        : deploymentTarget === 'aws-site-to-site'
+          ? [
+              '⚠️ Confirm IPsec policy matches customer gateway (phase 1/2).',
+              'ℹ️ Check BGP routes propagated to TGW/VPC route tables.',
+            ]
+          : deploymentTarget === 'aws-sidecar'
+            ? [
+                '⚠️ Confirm sidecar ENI has correct SGs for app egress.',
+                'ℹ️ Ensure task IAM role allows CreateNetworkInterface if needed.',
+              ]
+            : []
+    setDiagnostics([...awsSpecific, ...base])
   }
 
   const heroSubtitle = importedConfig
@@ -203,6 +310,7 @@ function App() {
           <div className="pill-row">
             <span className="pill">Protocol · {selectedProtocolInfo.name}</span>
             <span className="pill">Region · {selectedRegionInfo.name}</span>
+            <span className="pill">Target · {selectedTargetInfo.name}</span>
             <span className="pill">Status · {isConnected ? 'Connected' : 'Ready'}</span>
           </div>
         </div>
@@ -217,11 +325,22 @@ function App() {
             setConnectionName={setConnectionName}
             authMethod={authMethod}
             setAuthMethod={setAuthMethod}
-          username={username}
-          setUsername={setUsername}
-          selectedRegion={selectedRegion}
-          setSelectedRegion={setSelectedRegion}
-          selectedProtocol={selectedProtocol}
+            deploymentTarget={deploymentTarget}
+            setDeploymentTarget={setDeploymentTarget}
+            selectedTargetInfo={selectedTargetInfo}
+            awsVpcId={awsVpcId}
+            setAwsVpcId={setAwsVpcId}
+            awsSubnet={awsSubnet}
+            setAwsSubnet={setAwsSubnet}
+            awsSecurityGroup={awsSecurityGroup}
+            setAwsSecurityGroup={setAwsSecurityGroup}
+            awsCidr={awsCidr}
+            setAwsCidr={setAwsCidr}
+            username={username}
+            setUsername={setUsername}
+            selectedRegion={selectedRegion}
+            setSelectedRegion={setSelectedRegion}
+            selectedProtocol={selectedProtocol}
           setSelectedProtocol={setSelectedProtocol}
           selectedProtocolInfo={selectedProtocolInfo}
           selectedRegionInfo={selectedRegionInfo}
@@ -283,6 +402,17 @@ type WizardProps = {
   setConnectionName: (value: string) => void
   authMethod: 'credentials' | 'keys'
   setAuthMethod: (value: 'credentials' | 'keys') => void
+  deploymentTarget: DeploymentTargetId
+  setDeploymentTarget: (value: DeploymentTargetId) => void
+  selectedTargetInfo: DeploymentTarget
+  awsVpcId: string
+  setAwsVpcId: (value: string) => void
+  awsSubnet: string
+  setAwsSubnet: (value: string) => void
+  awsSecurityGroup: string
+  setAwsSecurityGroup: (value: string) => void
+  awsCidr: string
+  setAwsCidr: (value: string) => void
   username: string
   setUsername: (value: string) => void
   selectedRegion: string
@@ -301,6 +431,17 @@ function Wizard({
   setConnectionName,
   authMethod,
   setAuthMethod,
+  deploymentTarget,
+  setDeploymentTarget,
+  selectedTargetInfo,
+  awsVpcId,
+  setAwsVpcId,
+  awsSubnet,
+  setAwsSubnet,
+  awsSecurityGroup,
+  setAwsSecurityGroup,
+  awsCidr,
+  setAwsCidr,
   username,
   setUsername,
   selectedRegion,
@@ -354,6 +495,21 @@ function Wizard({
                 />
               </label>
               <label className="field">
+                <span>Deployment target</span>
+                <div className="choice-row">
+                  {deploymentTargets.map((target) => (
+                    <button
+                      key={target.id}
+                      className={`chip ${deploymentTarget === target.id ? 'chip-active' : ''}`}
+                      onClick={() => setDeploymentTarget(target.id)}
+                    >
+                      {target.name}
+                    </button>
+                  ))}
+                </div>
+                <div className="muted">{selectedTargetInfo.summary}</div>
+              </label>
+              <label className="field">
                 <span>Authentication</span>
                 <div className="choice-row">
                   <button
@@ -378,6 +534,29 @@ function Wizard({
                   placeholder="analyst"
                 />
               </label>
+              {deploymentTarget !== 'custom' && (
+                <div className="aws-grid">
+                  <div className="aws-field">
+                    <span className="muted">VPC</span>
+                    <input value={awsVpcId} onChange={(e) => setAwsVpcId(e.target.value)} />
+                  </div>
+                  <div className="aws-field">
+                    <span className="muted">Subnet</span>
+                    <input value={awsSubnet} onChange={(e) => setAwsSubnet(e.target.value)} />
+                  </div>
+                  <div className="aws-field">
+                    <span className="muted">Security group</span>
+                    <input
+                      value={awsSecurityGroup}
+                      onChange={(e) => setAwsSecurityGroup(e.target.value)}
+                    />
+                  </div>
+                  <div className="aws-field">
+                    <span className="muted">CIDR</span>
+                    <input value={awsCidr} onChange={(e) => setAwsCidr(e.target.value)} />
+                  </div>
+                </div>
+              )}
             </div>
             <div className="card">
               <h4>What you get</h4>
@@ -385,6 +564,11 @@ function Wizard({
                 <li>Visual explanation of the tunnel as you configure.</li>
                 <li>Protocol tips with trade-offs in plain language.</li>
                 <li>Live metrics once connected: latency, throughput, loss.</li>
+                {deploymentTarget !== 'custom' && (
+                  <li>
+                    AWS checklist: VPC/subnet/SG/CIDR callouts for Client VPN, Site-to-Site, or sidecars.
+                  </li>
+                )}
               </ul>
               <p className="muted">
                 We avoid logging sensitive fields. Demo values stay local to your browser.
@@ -443,6 +627,10 @@ function Wizard({
                 <strong>{connectionName}</strong>
               </div>
               <div className="summary-line">
+                <span>Target</span>
+                <strong>{selectedTargetInfo.name}</strong>
+              </div>
+              <div className="summary-line">
                 <span>Protocol</span>
                 <strong>{selectedProtocolInfo.name}</strong>
               </div>
@@ -450,6 +638,22 @@ function Wizard({
                 <span>Region</span>
                 <strong>{selectedRegionInfo.name}</strong>
               </div>
+              {deploymentTarget !== 'custom' && (
+                <>
+                  <div className="summary-line">
+                    <span>VPC / Subnet</span>
+                    <strong>
+                      {awsVpcId} / {awsSubnet}
+                    </strong>
+                  </div>
+                  <div className="summary-line">
+                    <span>SG / CIDR</span>
+                    <strong>
+                      {awsSecurityGroup} / {awsCidr}
+                    </strong>
+                  </div>
+                </>
+              )}
               <div className="summary-line">
                 <span>Auth</span>
                 <strong>{authMethod === 'credentials' ? `Username: ${username}` : 'Key-based'}</strong>

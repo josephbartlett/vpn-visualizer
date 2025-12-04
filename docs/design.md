@@ -14,6 +14,7 @@
 
 ## Component layout (src/App.tsx)
 - `Wizard` handles step navigation and collects inputs (name, auth method, region, protocol).
+- `Deployment target` selector supports Custom, AWS Client VPN, AWS Site-to-Site, and AWS Sidecar patterns with VPC/subnet/SG/CIDR callouts.
 - `ProtocolSelector` shows protocol cards; reused in wizard and sidebar.
 - `NetworkMap` renders SVG nodes/arcs with animated gradients and legend.
 - `MetricsPanel` simulates live metrics post-connect.
@@ -42,6 +43,7 @@
 - Provide clear warnings for insecure protocol/port choices and DNS leak checks.
 
 ## Future integration points
+- AWS: pull Client VPN/Site-to-Site endpoint metadata, validate SG/route table wiring, and generate OpenVPN/IPsec configs for download.
 - Fetch provider/server catalogs via API and drive region cards dynamically.
 - Replace simulated metrics with telemetry from VPN daemons (WireGuard/OpenVPN).
 - Add diagnostics that run real checks (MTU discovery, DNS leak test, port reachability).

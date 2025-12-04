@@ -34,6 +34,7 @@ docker run -p 8080:80 vpn-visualizer
 - Live metric simulation (latency/throughput/loss) once “connected”
 - Personalization controls (accent color, animation speed)
 - Troubleshooting checklist and glossary for newcomers
+- AWS-aware options: Client VPN, Site-to-Site, and sidecar targets with VPC/subnet/SG/CIDR callouts
 
 ## Project structure
 
@@ -51,3 +52,4 @@ docker run -p 8080:80 vpn-visualizer
 2) Feed real region lists from providers and persist user presets.  
 3) Expand troubleshooting to run real connectivity checks (MTU, DNS leaks).  
 4) Add documentation generation (MDX/Docs site) describing flows and APIs.  
+5) Integrate AWS metadata (Client VPN, Site-to-Site/TGW) and export configs.  

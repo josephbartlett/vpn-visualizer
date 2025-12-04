@@ -12,12 +12,15 @@
 - [ ] Replace static region/protocol lists with provider-fed data.
 - [ ] Add glossary expansions and inline tooltips tied to steps.
 - [ ] Local persistence for presets (connection name, last region, accent).
+- [ ] AWS metadata fetch: Client VPN endpoints, Site-to-Site/TGW associations, SGs, route tables.
+- [ ] AWS export: generate OpenVPN profiles for Client VPN and IPsec runbooks for Site-to-Site.
 
 ## Phase 3 – Backend integration
 - [ ] Wire real telemetry from WireGuard/OpenVPN daemons to metrics panel.
 - [ ] Config generation/download (wg-quick, .ovpn) from wizard inputs.
 - [ ] Basic auth/key storage strategy (env-backed secrets, no plaintext logging).
 - [ ] Troubleshooting checks: MTU probe, DNS leak test, port reachability.
+- [ ] AWS checks: SG/ACL reachability, TGW propagation, split-tunnel flags, CloudWatch metrics feed.
 
 ## Phase 4 – Sharing & education
 - [ ] Export/share flows as PDFs or slide snippets with screenshots.
