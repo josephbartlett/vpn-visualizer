@@ -1003,6 +1003,9 @@ function NetworkMap({ connected, region, protocol, animationSpeed, deploymentTar
             <stop offset="0%" stopColor={targetColor} stopOpacity="1" />
             <stop offset="100%" stopColor="#ffffff" stopOpacity="0.2" />
           </linearGradient>
+          <path id="path-to-gateway" d="M12 30 C 30 24, 34 22, 48 18" />
+          <path id="path-to-cloud-a" d="M48 18 C 65 14, 70 11, 82 12" />
+          <path id="path-to-cloud-b" d="M48 18 C 64 22, 72 26, 86 32" />
         </defs>
         <circle cx="12" cy="30" r="3.5" className="node-svg node-local" />
         <circle cx="48" cy="18" r="4" className="node-svg node-gateway" />
@@ -1015,30 +1018,42 @@ function NetworkMap({ connected, region, protocol, animationSpeed, deploymentTar
         <text x="48" y="27" textAnchor="middle" className="node-label">Gateway</text>
         <text x="82" y="20" className="node-label">Internet</text>
         <text x="86" y="40" className="node-label">Internet</text>
-        <circle
-          cx="32"
-          cy="24"
-          r="0.8"
-          className="packet"
-          stroke="url(#packets)"
-          style={{ animationDuration: `${packetDuration}s` }}
-        />
-        <circle
-          cx="60"
-          cy="14"
-          r="0.8"
-          className="packet packet-delay"
-          stroke="url(#packets)"
-          style={{ animationDuration: `${packetDuration}s` }}
-        />
-        <circle
-          cx="70"
-          cy="28"
-          r="0.8"
-          className="packet packet-delay2"
-          stroke="url(#packets)"
-          style={{ animationDuration: `${packetDuration}s` }}
-        />
+        <g className="packet-group">
+          <circle r="0.9" className="packet" stroke="url(#packets)">
+            <animateMotion
+              dur={`${packetDuration}s`}
+              repeatCount="indefinite"
+              rotate="auto"
+              path="M12 30 C 30 24, 34 22, 48 18"
+            />
+          </circle>
+          <circle r="0.9" className="packet packet-delay" stroke="url(#packets)">
+            <animateMotion
+              dur={`${packetDuration * 1.2}s`}
+              repeatCount="indefinite"
+              rotate="auto"
+              path="M12 30 C 30 24, 34 22, 48 18"
+              begin="0.2s"
+            />
+          </circle>
+          <circle r="0.9" className="packet packet-delay2" stroke="url(#packets)">
+            <animateMotion
+              dur={`${packetDuration * 1.3}s`}
+              repeatCount="indefinite"
+              rotate="auto"
+              path="M48 18 C 65 14, 70 11, 82 12"
+            />
+          </circle>
+          <circle r="0.9" className="packet packet-delay3" stroke="url(#packets)">
+            <animateMotion
+              dur={`${packetDuration * 1.4}s`}
+              repeatCount="indefinite"
+              rotate="auto"
+              path="M48 18 C 64 22, 72 26, 86 32"
+              begin="0.3s"
+            />
+          </circle>
+        </g>
       </svg>
 
       <div className="map-legend">

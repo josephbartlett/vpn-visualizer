@@ -595,7 +595,6 @@
 .packet {
   fill: none;
   stroke-width: 0.8;
-  animation: packet-travel calc(var(--pulse-speed) * 1.2) linear infinite;
 }
 
 .packet-delay {
@@ -604,6 +603,10 @@
 
 .packet-delay2 {
   animation-delay: 0.5s;
+}
+
+.packet-delay3 {
+  animation-delay: 0.7s;
 }
 
 .map-legend {
