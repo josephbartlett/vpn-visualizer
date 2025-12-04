@@ -1019,8 +1019,7 @@ function NetworkMap({ connected, region, protocol, animationSpeed, deploymentTar
         <text x="82" y="20" className="node-label">Internet</text>
         <text x="86" y="40" className="node-label">Internet</text>
         <g className="packet-group">
-          <circle r="0.9" className="packet" stroke="url(#packets)" cx="12" cy="30">
-            <animate attributeName="visibility" from="hidden" to="visible" dur="0.01s" fill="freeze" />
+          <circle r="0.9" className="packet" stroke="url(#packets)">
             <animateMotion
               dur={`${packetDuration}s`}
               repeatCount="indefinite"
@@ -1028,8 +1027,7 @@ function NetworkMap({ connected, region, protocol, animationSpeed, deploymentTar
               path="M12 30 C 30 24, 34 22, 48 18"
             />
           </circle>
-          <circle r="0.9" className="packet packet-delay" stroke="url(#packets)" cx="12" cy="30">
-            <animate attributeName="visibility" from="hidden" to="visible" dur="0.01s" begin="0.2s" fill="freeze" />
+          <circle r="0.9" className="packet packet-delay" stroke="url(#packets)">
             <animateMotion
               dur={`${packetDuration * 1.2}s`}
               repeatCount="indefinite"
@@ -1038,8 +1036,7 @@ function NetworkMap({ connected, region, protocol, animationSpeed, deploymentTar
               begin="0.2s"
             />
           </circle>
-          <circle r="0.9" className="packet packet-delay2" stroke="url(#packets)" cx="48" cy="18">
-            <animate attributeName="visibility" from="hidden" to="visible" dur="0.01s" begin="0.1s" fill="freeze" />
+          <circle r="0.9" className="packet packet-delay2" stroke="url(#packets)">
             <animateMotion
               dur={`${packetDuration * 1.3}s`}
               repeatCount="indefinite"
@@ -1047,8 +1044,7 @@ function NetworkMap({ connected, region, protocol, animationSpeed, deploymentTar
               path="M48 18 C 65 14, 70 11, 82 12"
             />
           </circle>
-          <circle r="0.9" className="packet packet-delay3" stroke="url(#packets)" cx="48" cy="18">
-            <animate attributeName="visibility" from="hidden" to="visible" dur="0.01s" begin="0.3s" fill="freeze" />
+          <circle r="0.9" className="packet packet-delay3" stroke="url(#packets)">
             <animateMotion
               dur={`${packetDuration * 1.4}s`}
               repeatCount="indefinite"
