@@ -1,0 +1,10 @@
+node_modules
+dist
+.git
+.DS_Store
+*.log
+*.tgz
+*.tar.gz
+docker-compose.yml
+README.md
+screenshot.png
