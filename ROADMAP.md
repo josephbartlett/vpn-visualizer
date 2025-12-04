@@ -8,6 +8,7 @@
 - [x] Personalization controls (accent, animation speed).
 - [x] Docker-only dev + prod images.
 - [x] Contrast tuning for dark backgrounds.
+- [x] Target-aware map animation and basic Playwright visual smoke test.
 
 ## Phase 2 – Data & content
 - [x] Local persistence of wizard/theme/AWS fields (browser storage for demos).

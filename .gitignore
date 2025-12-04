@@ -7,3 +7,4 @@ yarn.lock
 *.log
 *.tgz
 *.tar.gz
+tests/output

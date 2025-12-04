@@ -16,7 +16,7 @@
 - `Wizard` handles step navigation and collects inputs (name, auth method, region, protocol).
 - `Deployment target` selector supports Custom, AWS Client VPN, AWS Site-to-Site, and AWS Sidecar patterns with VPC/subnet/SG/CIDR callouts.
 - `ProtocolSelector` shows protocol cards; reused in wizard and sidebar.
-- `NetworkMap` renders SVG nodes/arcs with animated gradients and legend.
+- `NetworkMap` renders SVG nodes/arcs with animated gradients and legend, always animating for previews; node labels, target/protocol badges, per-target line styles, and packet patterns vary by target.
 - `MetricsPanel` simulates live metrics post-connect; telemetry profile changes per target (custom vs AWS).
 - `ConfigPreview` emits copy-ready snippets (OpenVPN for Client VPN, IPsec runbook, sidecar notes, WireGuard).
 - `CustomizationPanel` adjusts CSS variables for accent color and animation speed.

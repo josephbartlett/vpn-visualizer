@@ -516,6 +516,7 @@ function App() {
             protocol={selectedProtocolInfo}
             animationSpeed={animationSpeed}
             deploymentTarget={deploymentTarget}
+            targetLabel={selectedTargetInfo.name}
           />
         </section>
 
@@ -965,9 +966,10 @@ type NetworkMapProps = {
   protocol: Protocol
   animationSpeed: number
   deploymentTarget: DeploymentTargetId
+  targetLabel: string
 }
 
-function NetworkMap({ connected, region, protocol, animationSpeed, deploymentTarget }: NetworkMapProps) {
+function NetworkMap({ connected, region, protocol, animationSpeed, deploymentTarget, targetLabel }: NetworkMapProps) {
   const targetColor =
     deploymentTarget === 'aws-client-vpn'
       ? '#7cf6d2'
@@ -977,9 +979,21 @@ function NetworkMap({ connected, region, protocol, animationSpeed, deploymentTar
           ? '#f6d27c'
           : 'var(--accent)'
 
+  const packetDuration =
+    deploymentTarget === 'aws-sidecar'
+      ? 1
+      : deploymentTarget === 'aws-client-vpn'
+        ? 1.4
+        : deploymentTarget === 'aws-site-to-site'
+          ? 1.6
+          : 1.5
+
+  const arcClass = `arc arc-${deploymentTarget}`
+  const mapLive = true // keep animation on for previews even before connect
+
   return (
     <div className="map-shell">
-      <svg viewBox="0 0 100 46" className={`map ${connected ? 'map-live' : ''}`}>
+      <svg viewBox="0 0 100 46" className={`map ${mapLive ? 'map-live' : ''}`}>
         <defs>
           <linearGradient id="tunnel" x1="0%" y1="0%" x2="100%" y2="0%">
             <stop offset="0%" stopColor={targetColor} stopOpacity="0.95" />
@@ -994,16 +1008,37 @@ function NetworkMap({ connected, region, protocol, animationSpeed, deploymentTar
         <circle cx="48" cy="18" r="4" className="node-svg node-gateway" />
         <circle cx="82" cy="12" r="3" className="node-svg node-cloud" />
         <circle cx="86" cy="32" r="3" className="node-svg node-cloud" />
-        <path d="M12 30 C 30 24, 34 22, 48 18" className="arc" stroke="url(#tunnel)" />
-        <path d="M48 18 C 65 14, 70 11, 82 12" className="arc" stroke="url(#tunnel)" />
-        <path d="M48 18 C 64 22, 72 26, 86 32" className="arc" stroke="url(#tunnel)" />
-        {connected && (
-          <>
-            <circle cx="32" cy="24" r="0.8" className="packet" stroke="url(#packets)" />
-            <circle cx="60" cy="14" r="0.8" className="packet packet-delay" stroke="url(#packets)" />
-            <circle cx="70" cy="28" r="0.8" className="packet packet-delay2" stroke="url(#packets)" />
-          </>
-        )}
+        <path d="M12 30 C 30 24, 34 22, 48 18" className={arcClass} stroke="url(#tunnel)" />
+        <path d="M48 18 C 65 14, 70 11, 82 12" className={arcClass} stroke="url(#tunnel)" />
+        <path d="M48 18 C 64 22, 72 26, 86 32" className={arcClass} stroke="url(#tunnel)" />
+        <text x="12" y="38" className="node-label">You</text>
+        <text x="48" y="27" textAnchor="middle" className="node-label">Gateway</text>
+        <text x="82" y="20" className="node-label">Internet</text>
+        <text x="86" y="40" className="node-label">Internet</text>
+        <circle
+          cx="32"
+          cy="24"
+          r="0.8"
+          className="packet"
+          stroke="url(#packets)"
+          style={{ animationDuration: `${packetDuration}s` }}
+        />
+        <circle
+          cx="60"
+          cy="14"
+          r="0.8"
+          className="packet packet-delay"
+          stroke="url(#packets)"
+          style={{ animationDuration: `${packetDuration}s` }}
+        />
+        <circle
+          cx="70"
+          cy="28"
+          r="0.8"
+          className="packet packet-delay2"
+          stroke="url(#packets)"
+          style={{ animationDuration: `${packetDuration}s` }}
+        />
       </svg>
 
       <div className="map-legend">
@@ -1013,10 +1048,15 @@ function NetworkMap({ connected, region, protocol, animationSpeed, deploymentTar
         <LegendItem label="Protocol" detail={protocol.name} />
       </div>
 
+      <div className="map-badges">
+        <span className="pill">Target · {targetLabel}</span>
+        <span className="pill">Protocol · {protocol.name}</span>
+      </div>
+
       <div className="map-hint">
         <span className={`dot ${connected ? 'dot-live' : ''}`} />
         {connected
-          ? `Live stream · Target ${region.name} (${deploymentTarget}) · Animations at ${animationSpeed.toFixed(
+          ? `Live stream · Target ${region.name} (${targetLabel}) · Animations at ${animationSpeed.toFixed(
               1,
             )}s`
           : 'Click connect to animate the tunnel'}

@@ -546,6 +546,11 @@
   stroke-width: 0.5;
 }
 
+.node-label {
+  fill: var(--muted);
+  font-size: 3px;
+}
+
 .node-local {
   fill: rgba(124, 246, 210, 0.9);
   stroke: rgba(124, 246, 210, 0.8);
@@ -574,6 +579,19 @@
   opacity: 0.95;
 }
 
+.arc-aws-client-vpn {
+  stroke-dasharray: 2 3;
+}
+
+.arc-aws-site-to-site {
+  stroke-dasharray: none;
+  stroke-width: 1.5;
+}
+
+.arc-aws-sidecar {
+  stroke-dasharray: 1 2;
+}
+
 .packet {
   fill: none;
   stroke-width: 0.8;
@@ -593,6 +611,13 @@
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 0.6rem;
   margin-top: 0.75rem;
+}
+
+.map-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
 }
 
 .legend-item {

@@ -29,6 +29,7 @@ docker run -p 8080:80 vpn-visualizer
 
 - React + TypeScript + Vite UI scaffold
 - Interactive network map showing device → gateway → internet hops
+- Target-aware map with animated packets and per-target line styles
 - Guided wizard (identity, region, protocol, review/connect)
 - Protocol selector with plain-language trade-offs
 - Live metric simulation (latency/throughput/loss) once “connected”
@@ -47,6 +48,19 @@ docker run -p 8080:80 vpn-visualizer
 - `docs/design.md` – UX/architecture notes
 - `docs/goals.md` – project intent
 - `ROADMAP.md` – phased plan with checklists
+
+## Testing
+
+Manual: run the app (`docker-compose up app`), then click through targets/protocols; map colours/packets should update immediately, and metrics/legend change after Connect.
+
+Visual check (requires app running on http://localhost:5173):
+
+```bash
+# run from workspace
+npm run test:visual
+```
+
+This uses Playwright to switch targets/protocols, click Connect, and capture `tests/output/map.png` for inspection.
 
 ## Next steps
 
