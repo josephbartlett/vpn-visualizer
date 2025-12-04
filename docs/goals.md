@@ -6,3 +6,5 @@
 - Keep the stack portable via Docker-only workflows.
 - Prepare for backend integration with minimal UI changes.
 - Support AWS-first scenarios (Client VPN, Site-to-Site, sidecars) with callouts for VPC/subnet/SG/routing.
+- Ship copy-ready config previews and simple persistence so demos feel real without backend wiring.
+- Maintain readable contrast for dark backgrounds across devices.

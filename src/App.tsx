@@ -1,5 +1,7 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import './App.css'
+import { pickAwsDefaults } from './awsData'
+import type { DeploymentTargetId } from './types'
 
 type Protocol = {
   id: string
@@ -19,6 +21,7 @@ type Region = {
   latency: number
   load: number
   country: string
+  awsRegion: string
 }
 
 type Metrics = {
@@ -34,7 +37,6 @@ type DeploymentTarget = {
   notes: string
 }
 
-type DeploymentTargetId = 'custom' | 'aws-client-vpn' | 'aws-site-to-site' | 'aws-sidecar'
 
 const protocolCatalog: Protocol[] = [
   {
@@ -100,11 +102,46 @@ const protocolCatalog: Protocol[] = [
 ]
 
 const regionOptions: Region[] = [
-  { id: 'nyc', name: 'New York', latency: 32, load: 0.35, country: 'United States' },
-  { id: 'ams', name: 'Amsterdam', latency: 58, load: 0.42, country: 'Netherlands' },
-  { id: 'sin', name: 'Singapore', latency: 183, load: 0.51, country: 'Singapore' },
-  { id: 'syd', name: 'Sydney', latency: 212, load: 0.38, country: 'Australia' },
-  { id: 'sao', name: 'São Paulo', latency: 145, load: 0.46, country: 'Brazil' },
+  {
+    id: 'nyc',
+    name: 'New York',
+    latency: 32,
+    load: 0.35,
+    country: 'United States',
+    awsRegion: 'us-east-1',
+  },
+  {
+    id: 'ams',
+    name: 'Amsterdam',
+    latency: 58,
+    load: 0.42,
+    country: 'Netherlands',
+    awsRegion: 'eu-west-1',
+  },
+  {
+    id: 'sin',
+    name: 'Singapore',
+    latency: 183,
+    load: 0.51,
+    country: 'Singapore',
+    awsRegion: 'ap-southeast-1',
+  },
+  {
+    id: 'syd',
+    name: 'Sydney',
+    latency: 212,
+    load: 0.38,
+    country: 'Australia',
+    awsRegion: 'ap-southeast-2',
+  },
+  {
+    id: 'sao',
+    name: 'São Paulo',
+    latency: 145,
+    load: 0.46,
+    country: 'Brazil',
+    awsRegion: 'sa-east-1',
+  },
 ]
 
 const deploymentTargets: DeploymentTarget[] = [
@@ -149,6 +186,15 @@ const wizardSteps = [
   { id: 'review', title: 'Review & launch', detail: 'Visualize the route, then connect.' },
 ]
 
+const telemetryProfiles: Record<DeploymentTargetId, Metrics> = {
+  custom: { latency: 52, throughput: 180, loss: 0.28 },
+  'aws-client-vpn': { latency: 38, throughput: 215, loss: 0.18 },
+  'aws-site-to-site': { latency: 42, throughput: 260, loss: 0.12 },
+  'aws-sidecar': { latency: 32, throughput: 240, loss: 0.14 },
+}
+
+const STORAGE_KEY = 'vpn-visualizer-settings'
+
 function App() {
   const [connectionName, setConnectionName] = useState('Training Lab Tunnel')
   const [authMethod, setAuthMethod] = useState<'credentials' | 'keys'>('credentials')
@@ -163,10 +209,74 @@ function App() {
   const [activeStep, setActiveStep] = useState(0)
   const [importedConfig, setImportedConfig] = useState(false)
   const [isConnected, setIsConnected] = useState(false)
-  const [metrics, setMetrics] = useState<Metrics>({ latency: 48, throughput: 180, loss: 0.2 })
+  const [metrics, setMetrics] = useState<Metrics>(telemetryProfiles['aws-client-vpn'])
   const [diagnostics, setDiagnostics] = useState<string[]>([])
   const [accent, setAccent] = useState('#7cf6d2')
   const [animationSpeed, setAnimationSpeed] = useState(1.4)
+  const prevTargetRef = useRef<DeploymentTargetId>(deploymentTarget)
+  const prevRegionRef = useRef<string>(selectedRegion)
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const saved = window.localStorage.getItem(STORAGE_KEY)
+    if (!saved) return
+    try {
+      const parsed = JSON.parse(saved)
+      if (typeof parsed.connectionName === 'string') setConnectionName(parsed.connectionName)
+      if (parsed.authMethod === 'credentials' || parsed.authMethod === 'keys')
+        setAuthMethod(parsed.authMethod)
+      if (
+        parsed.deploymentTarget === 'custom' ||
+        parsed.deploymentTarget === 'aws-client-vpn' ||
+        parsed.deploymentTarget === 'aws-site-to-site' ||
+        parsed.deploymentTarget === 'aws-sidecar'
+      )
+        setDeploymentTarget(parsed.deploymentTarget)
+      if (typeof parsed.username === 'string') setUsername(parsed.username)
+      if (typeof parsed.selectedRegion === 'string') setSelectedRegion(parsed.selectedRegion)
+      if (typeof parsed.selectedProtocol === 'string') setSelectedProtocol(parsed.selectedProtocol)
+      if (typeof parsed.accent === 'string') setAccent(parsed.accent)
+      if (typeof parsed.animationSpeed === 'number') setAnimationSpeed(parsed.animationSpeed)
+      if (typeof parsed.awsVpcId === 'string') setAwsVpcId(parsed.awsVpcId)
+      if (typeof parsed.awsSubnet === 'string') setAwsSubnet(parsed.awsSubnet)
+      if (typeof parsed.awsSecurityGroup === 'string') setAwsSecurityGroup(parsed.awsSecurityGroup)
+      if (typeof parsed.awsCidr === 'string') setAwsCidr(parsed.awsCidr)
+    } catch (error) {
+      console.warn('Unable to load saved settings', error)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const payload = {
+      connectionName,
+      authMethod,
+      deploymentTarget,
+      username,
+      selectedRegion,
+      selectedProtocol,
+      accent,
+      animationSpeed,
+      awsVpcId,
+      awsSubnet,
+      awsSecurityGroup,
+      awsCidr,
+    }
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(payload))
+  }, [
+    connectionName,
+    authMethod,
+    deploymentTarget,
+    username,
+    selectedRegion,
+    selectedProtocol,
+    accent,
+    animationSpeed,
+    awsVpcId,
+    awsSubnet,
+    awsSecurityGroup,
+    awsCidr,
+  ])
 
   const selectedProtocolInfo = useMemo(
     () => protocolCatalog.find((p) => p.id === selectedProtocol) ?? protocolCatalog[0],
@@ -183,24 +293,60 @@ function App() {
     [selectedRegion],
   )
 
+  const telemetrySource =
+    deploymentTarget === 'custom' ? 'Simulated local agent' : 'Simulated AWS CloudWatch'
+
   useEffect(() => {
     document.documentElement.style.setProperty('--accent', accent)
     document.documentElement.style.setProperty('--pulse-speed', `${animationSpeed}s`)
   }, [accent, animationSpeed])
 
   useEffect(() => {
+    const targetChanged = prevTargetRef.current !== deploymentTarget
+    const regionChanged = prevRegionRef.current !== selectedRegion
+
+    if (deploymentTarget !== 'custom') {
+      const defaults = pickAwsDefaults(deploymentTarget, selectedRegionInfo.awsRegion)
+      if (defaults && (targetChanged || regionChanged)) {
+        if ('vpcId' in defaults && defaults.vpcId) setAwsVpcId(defaults.vpcId)
+        if ('subnetId' in defaults && defaults.subnetId) setAwsSubnet(defaults.subnetId)
+        if ('securityGroupId' in defaults && defaults.securityGroupId)
+          setAwsSecurityGroup(defaults.securityGroupId)
+        if ('cidr' in defaults && defaults.cidr) setAwsCidr(defaults.cidr)
+        if ('tunnelCidr' in defaults && defaults.tunnelCidr) setAwsCidr(defaults.tunnelCidr)
+      }
+    }
+    prevTargetRef.current = deploymentTarget
+    prevRegionRef.current = selectedRegion
+  }, [deploymentTarget, selectedRegion, selectedRegionInfo])
+
+  useEffect(() => {
     if (!isConnected) return
 
     const interval = window.setInterval(() => {
-      setMetrics((prev) => ({
-        latency: Math.max(18, prev.latency + (Math.random() - 0.5) * 8),
-        throughput: Math.max(85, prev.throughput + (Math.random() - 0.5) * 20),
-        loss: Math.max(0, Math.min(1.2, prev.loss + (Math.random() - 0.5) * 0.2)),
+      const profile = telemetryProfiles[deploymentTarget]
+      setMetrics(() => ({
+        latency: Math.max(
+          12,
+          profile.latency + (Math.random() - 0.5) * 10 + (Math.random() - 0.5) * 2,
+        ),
+        throughput: Math.max(
+          90,
+          profile.throughput + (Math.random() - 0.5) * 30 + (Math.random() - 0.5) * 10,
+        ),
+        loss: Math.max(
+          0,
+          Math.min(1.4, profile.loss + (Math.random() - 0.5) * 0.25),
+        ),
       }))
     }, 1400)
 
     return () => clearInterval(interval)
-  }, [isConnected])
+  }, [isConnected, deploymentTarget])
+
+  useEffect(() => {
+    setMetrics(telemetryProfiles[deploymentTarget])
+  }, [deploymentTarget])
 
   const handleConnect = () => {
     setActiveStep(wizardSteps.length - 1)
@@ -377,7 +523,12 @@ function App() {
             setSelectedProtocol={setSelectedProtocol}
             protocols={protocolCatalog}
           />
-          <MetricsPanel metrics={metrics} protocol={selectedProtocolInfo} connected={isConnected} />
+          <MetricsPanel
+            metrics={metrics}
+            protocol={selectedProtocolInfo}
+            connected={isConnected}
+            telemetrySource={telemetrySource}
+          />
           <CustomizationPanel
             accent={accent}
             setAccent={setAccent}
@@ -387,6 +538,15 @@ function App() {
         </section>
 
         <section className="panel panel-support">
+          <ConfigPreview
+            deploymentTarget={deploymentTarget}
+            region={selectedRegionInfo}
+            protocol={selectedProtocolInfo}
+            awsVpcId={awsVpcId}
+            awsSubnet={awsSubnet}
+            awsSecurityGroup={awsSecurityGroup}
+            awsCidr={awsCidr}
+          />
           <Troubleshoot diagnostics={diagnostics} onRun={runTroubleshoot} />
           <HelpPanel />
         </section>
@@ -792,9 +952,14 @@ function LegendItem({ label, detail }: { label: string; detail: string }) {
   )
 }
 
-type MetricsPanelProps = { metrics: Metrics; protocol: Protocol; connected: boolean }
+type MetricsPanelProps = {
+  metrics: Metrics
+  protocol: Protocol
+  connected: boolean
+  telemetrySource: string
+}
 
-function MetricsPanel({ metrics, protocol, connected }: MetricsPanelProps) {
+function MetricsPanel({ metrics, protocol, connected, telemetrySource }: MetricsPanelProps) {
   return (
     <div className="panel">
       <div className="panel-header">
@@ -803,9 +968,12 @@ function MetricsPanel({ metrics, protocol, connected }: MetricsPanelProps) {
           <h3>Connection health</h3>
           <p className="muted">Live metrics refresh while connected.</p>
         </div>
-        <span className={`pill ${connected ? 'pill-live' : ''}`}>
-          {connected ? 'Live' : 'Idle'}
-        </span>
+        <div className="pill-row">
+          <span className={`pill ${connected ? 'pill-live' : ''}`}>
+            {connected ? 'Live' : 'Idle'}
+          </span>
+          <span className="pill">Telemetry · {telemetrySource}</span>
+        </div>
       </div>
       <div className="metrics-grid">
         <Metric label="Latency" value={`${metrics.latency.toFixed(0)} ms`} />
@@ -872,6 +1040,107 @@ function CustomizationPanel({
         />
         <div className="muted">Current: {animationSpeed.toFixed(1)}s loop</div>
       </label>
+    </div>
+  )
+}
+
+type ConfigPreviewProps = {
+  deploymentTarget: DeploymentTargetId
+  region: Region
+  protocol: Protocol
+  awsVpcId: string
+  awsSubnet: string
+  awsSecurityGroup: string
+  awsCidr: string
+}
+
+function buildConfigSnippet({
+  deploymentTarget,
+  region,
+  protocol,
+  awsVpcId,
+  awsSubnet,
+  awsSecurityGroup,
+  awsCidr,
+}: ConfigPreviewProps) {
+  const regionCode = region.awsRegion
+  if (deploymentTarget === 'aws-client-vpn') {
+    return `client
+dev tun
+proto udp
+remote ${regionCode}.clientvpn.amazonaws.com 443
+auth-user-pass
+remote-cert-tls server
+explicit-exit-notify
+; Attachments
+; VPC ${awsVpcId}, Subnet ${awsSubnet}, SG ${awsSecurityGroup}
+; Routes ${awsCidr} (split-tunnel ${awsCidr ? 'enabled' : 'pending'})`
+  }
+  if (deploymentTarget === 'aws-site-to-site') {
+    return `# AWS Site-to-Site (IPsec) runbook
+Phase1: AES256-GCM / SHA256 / DH14
+Phase2: AES256-GCM / PFS14 / 3600s
+Tunnel CIDR: ${awsCidr || '169.254.x.x/30'}
+Customer Gateway: ${awsSecurityGroup || 'cgw-xxxx'}
+Region: ${regionCode}
+Route: advertise ${awsCidr || '10.0.0.0/16'} via BGP`
+  }
+  if (deploymentTarget === 'aws-sidecar') {
+    return `# AWS Sidecar notes
+Service region: ${regionCode}
+Sidecar SG: ${awsSecurityGroup}
+VPC: ${awsVpcId}, Subnet: ${awsSubnet}
+Ensure task/service role allows ENI mgmt and SG rules permit app -> sidecar egress.`
+  }
+  return `[Interface]
+PrivateKey = <your-private-key>
+Address = 10.7.0.2/32
+DNS = 10.7.0.1
+
+[Peer]
+PublicKey = <peer-public-key>
+AllowedIPs = ${awsCidr || '0.0.0.0/0'}
+Endpoint = ${region.name.toLowerCase()}.vpn.local:51820
+# Protocol ${protocol.name}`
+}
+
+function ConfigPreview(props: ConfigPreviewProps) {
+  const snippet = buildConfigSnippet(props)
+  const [copyLabel, setCopyLabel] = useState('Copy snippet')
+
+  const handleCopy = async () => {
+    if (!navigator.clipboard) {
+      setCopyLabel('Clipboard unavailable')
+      return
+    }
+    await navigator.clipboard.writeText(snippet)
+    setCopyLabel('Copied!')
+    window.setTimeout(() => setCopyLabel('Copy snippet'), 1200)
+  }
+
+  return (
+    <div className="panel">
+      <div className="panel-header">
+        <div>
+          <p className="eyebrow">Config preview</p>
+          <h3>Export-ready snippet</h3>
+          <p className="muted">
+            Tailored for {props.deploymentTarget === 'custom' ? 'self-managed VPN' : 'AWS'} using
+            current selections.
+          </p>
+        </div>
+        <button className="cta ghost" onClick={handleCopy}>
+          {copyLabel}
+        </button>
+      </div>
+      <div className="config-preview">
+        <div className="config-meta">
+          <span className="pill">Target · {props.deploymentTarget}</span>
+          <span className="pill">Region · {props.region.awsRegion}</span>
+          <span className="pill">Protocol · {props.protocol.name}</span>
+        </div>
+        <pre>{snippet}</pre>
+      </div>
     </div>
   )
 }

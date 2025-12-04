@@ -17,19 +17,23 @@
 - `Deployment target` selector supports Custom, AWS Client VPN, AWS Site-to-Site, and AWS Sidecar patterns with VPC/subnet/SG/CIDR callouts.
 - `ProtocolSelector` shows protocol cards; reused in wizard and sidebar.
 - `NetworkMap` renders SVG nodes/arcs with animated gradients and legend.
-- `MetricsPanel` simulates live metrics post-connect.
+- `MetricsPanel` simulates live metrics post-connect; telemetry profile changes per target (custom vs AWS).
+- `ConfigPreview` emits copy-ready snippets (OpenVPN for Client VPN, IPsec runbook, sidecar notes, WireGuard).
 - `CustomizationPanel` adjusts CSS variables for accent color and animation speed.
 - `Troubleshoot` + `HelpPanel` provide quick diagnostics and glossary.
 
 ## State & data
 - Local React state holds wizard selections, connection status, and simulated metrics.
 - Protocol/region catalogs are static arrays for now (seed for future API-driven lists).
+- AWS catalog stub (`src/awsData.ts`) provides sample Client VPN, Site-to-Site, and sidecar metadata; auto-fills VPC/subnet/SG/CIDR when target/region changes.
 - Metrics update on an interval only when “connected” to mimic live telemetry.
 - Accent + animation speed update CSS variables to keep styling centralized.
+- Settings persist in `localStorage` (target, region, protocol, AWS fields, theme).
 
 ## Styling
 - Theme defined in `src/index.css`; component-level layout/animation in `src/App.css`.
 - Gradient panels, pulsating arcs, and dot indicators emphasize “live tunnel” feel.
+- Contrast tuned (lighter base text/muted values) to avoid near-black text on dark backgrounds.
 - Responsive grid adapts panels for tablet/mobile; map/legend stack on narrow widths.
 
 ## Build & runtime
@@ -41,10 +45,11 @@
 - Keep credentials client-side until a secure backend exists; avoid logging sensitive input.
 - When adding backend: store secrets securely, enforce TLS, validate configs, and avoid persisting raw keys.
 - Provide clear warnings for insecure protocol/port choices and DNS leak checks.
+- Export/share configs as files or QR codes for mobile onboarding.
 
 ## Future integration points
 - AWS: pull Client VPN/Site-to-Site endpoint metadata, validate SG/route table wiring, and generate OpenVPN/IPsec configs for download.
 - Fetch provider/server catalogs via API and drive region cards dynamically.
-- Replace simulated metrics with telemetry from VPN daemons (WireGuard/OpenVPN).
+- Replace simulated metrics with telemetry from VPN daemons (WireGuard/OpenVPN) or CloudWatch for AWS VPNs.
 - Add diagnostics that run real checks (MTU discovery, DNS leak test, port reachability).
 - Export/share configs as files or QR codes for mobile onboarding.

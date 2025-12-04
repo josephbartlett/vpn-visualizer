@@ -5,8 +5,8 @@
   --panel: #0d142b;
   --panel-alt: #0f1a39;
   --border: #1d2b52;
-  --text: #e8edff;
-  --muted: #8ea0c7;
+  --text: #f4f7ff;
+  --muted: #b3c3e6;
   --accent: #7cf6d2;
   --pill: #162340;
   --danger: #ff7c7c;
@@ -33,6 +33,7 @@ body {
     radial-gradient(circle at 80% 0%, rgba(137, 168, 255, 0.08), transparent 30%),
     var(--bg);
   min-height: 100vh;
+  color: var(--text);
 }
 
 a {
