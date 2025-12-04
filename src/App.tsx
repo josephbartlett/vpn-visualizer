@@ -496,18 +496,18 @@ function App() {
       </section>
 
         <section className="panel panel-map">
-          <div className="panel-header">
-            <div>
-              <p className="eyebrow">Interactive network map</p>
-              <h3>Visualize the tunnel and traffic path</h3>
-              <p className="muted">
-                Animated arcs show how your device reaches {selectedRegionInfo.name} before
-                hitting the open internet. Tooltips unpack each stage.
-              </p>
-            </div>
-            <div className="status">
-              <span className={`dot ${isConnected ? 'dot-live' : ''}`} />
-              {isConnected ? 'Connected' : 'Not connected'}
+      <div className="panel-header">
+        <div>
+          <p className="eyebrow">Interactive network map</p>
+          <h3>Visualize the tunnel and traffic path</h3>
+          <p className="muted">
+            Animated arcs show how your device reaches {selectedRegionInfo.name} before
+            hitting the open internet. Target/protocol change the palette and packet animation.
+          </p>
+        </div>
+        <div className="status">
+          <span className={`dot ${isConnected ? 'dot-live' : ''}`} />
+          {isConnected ? 'Connected' : 'Not connected'}
             </div>
           </div>
           <NetworkMap
@@ -515,6 +515,7 @@ function App() {
             region={selectedRegionInfo}
             protocol={selectedProtocolInfo}
             animationSpeed={animationSpeed}
+            deploymentTarget={deploymentTarget}
           />
         </section>
 
@@ -963,16 +964,30 @@ type NetworkMapProps = {
   region: Region
   protocol: Protocol
   animationSpeed: number
+  deploymentTarget: DeploymentTargetId
 }
 
-function NetworkMap({ connected, region, protocol, animationSpeed }: NetworkMapProps) {
+function NetworkMap({ connected, region, protocol, animationSpeed, deploymentTarget }: NetworkMapProps) {
+  const targetColor =
+    deploymentTarget === 'aws-client-vpn'
+      ? '#7cf6d2'
+      : deploymentTarget === 'aws-site-to-site'
+        ? '#89a8ff'
+        : deploymentTarget === 'aws-sidecar'
+          ? '#f6d27c'
+          : 'var(--accent)'
+
   return (
     <div className="map-shell">
       <svg viewBox="0 0 100 46" className={`map ${connected ? 'map-live' : ''}`}>
         <defs>
           <linearGradient id="tunnel" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="var(--accent)" stopOpacity="0.95" />
+            <stop offset="0%" stopColor={targetColor} stopOpacity="0.95" />
             <stop offset="100%" stopColor="#89a8ff" stopOpacity="0.6" />
+          </linearGradient>
+          <linearGradient id="packets" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor={targetColor} stopOpacity="1" />
+            <stop offset="100%" stopColor="#ffffff" stopOpacity="0.2" />
           </linearGradient>
         </defs>
         <circle cx="12" cy="30" r="3.5" className="node-svg node-local" />
@@ -982,6 +997,13 @@ function NetworkMap({ connected, region, protocol, animationSpeed }: NetworkMapP
         <path d="M12 30 C 30 24, 34 22, 48 18" className="arc" stroke="url(#tunnel)" />
         <path d="M48 18 C 65 14, 70 11, 82 12" className="arc" stroke="url(#tunnel)" />
         <path d="M48 18 C 64 22, 72 26, 86 32" className="arc" stroke="url(#tunnel)" />
+        {connected && (
+          <>
+            <circle cx="32" cy="24" r="0.8" className="packet" stroke="url(#packets)" />
+            <circle cx="60" cy="14" r="0.8" className="packet packet-delay" stroke="url(#packets)" />
+            <circle cx="70" cy="28" r="0.8" className="packet packet-delay2" stroke="url(#packets)" />
+          </>
+        )}
       </svg>
 
       <div className="map-legend">
@@ -994,7 +1016,9 @@ function NetworkMap({ connected, region, protocol, animationSpeed }: NetworkMapP
       <div className="map-hint">
         <span className={`dot ${connected ? 'dot-live' : ''}`} />
         {connected
-          ? `Live stream · Target ${region.name} · Animations at ${animationSpeed.toFixed(1)}s`
+          ? `Live stream · Target ${region.name} (${deploymentTarget}) · Animations at ${animationSpeed.toFixed(
+              1,
+            )}s`
           : 'Click connect to animate the tunnel'}
       </div>
     </div>
