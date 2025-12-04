@@ -213,6 +213,7 @@ function App() {
   const [diagnostics, setDiagnostics] = useState<string[]>([])
   const [accent, setAccent] = useState('#7cf6d2')
   const [animationSpeed, setAnimationSpeed] = useState(1.4)
+  const [protocolsExpanded, setProtocolsExpanded] = useState(false)
   const prevTargetRef = useRef<DeploymentTargetId>(deploymentTarget)
   const prevRegionRef = useRef<string>(selectedRegion)
 
@@ -518,10 +519,12 @@ function App() {
         </section>
 
         <section className="panel panel-side">
-          <ProtocolSelector
+          <ProtocolPanel
+            protocols={protocolCatalog}
             selectedProtocol={selectedProtocol}
             setSelectedProtocol={setSelectedProtocol}
-            protocols={protocolCatalog}
+            expanded={protocolsExpanded}
+            setExpanded={setProtocolsExpanded}
           />
           <MetricsPanel
             metrics={metrics}
@@ -900,6 +903,61 @@ function ProtocolSelector({ selectedProtocol, setSelectedProtocol, protocols, co
   )
 }
 
+type ProtocolPanelProps = {
+  protocols: Protocol[]
+  selectedProtocol: string
+  setSelectedProtocol: (value: string) => void
+  expanded: boolean
+  setExpanded: (value: boolean) => void
+}
+
+function ProtocolPanel({
+  protocols,
+  selectedProtocol,
+  setSelectedProtocol,
+  expanded,
+  setExpanded,
+}: ProtocolPanelProps) {
+  return (
+    <div className="panel">
+      <div className="panel-header">
+        <div>
+          <p className="eyebrow">Protocol guide</p>
+          <h3>Pick a tunnel style</h3>
+          <p className="muted">
+            Collapse to shorten the page; expand for details and comparisons.
+          </p>
+        </div>
+        <button className="cta ghost" onClick={() => setExpanded(!expanded)}>
+          {expanded ? 'Hide' : 'Show'}
+        </button>
+      </div>
+      {expanded ? (
+        <div className="protocol-scroll">
+          <ProtocolSelector
+            selectedProtocol={selectedProtocol}
+            setSelectedProtocol={setSelectedProtocol}
+            protocols={protocols}
+            compact
+          />
+        </div>
+      ) : (
+        <div className="protocol-summary">
+          {protocols.map((protocol) => (
+            <button
+              key={protocol.id}
+              className={`pill ${selectedProtocol === protocol.id ? 'pill-live' : ''}`}
+              onClick={() => setSelectedProtocol(protocol.id)}
+            >
+              {protocol.name}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 type NetworkMapProps = {
   connected: boolean
   region: Region
@@ -936,7 +994,7 @@ function NetworkMap({ connected, region, protocol, animationSpeed }: NetworkMapP
       <div className="map-hint">
         <span className={`dot ${connected ? 'dot-live' : ''}`} />
         {connected
-          ? `Live stream enabled · Animations at ${animationSpeed.toFixed(1)}s`
+          ? `Live stream · Target ${region.name} · Animations at ${animationSpeed.toFixed(1)}s`
           : 'Click connect to animate the tunnel'}
       </div>
     </div>

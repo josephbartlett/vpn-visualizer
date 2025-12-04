@@ -688,6 +688,17 @@
   margin: 0.35rem 0;
 }
 
+.protocol-scroll {
+  max-height: 360px;
+  overflow-y: auto;
+}
+
+.protocol-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
 @keyframes pulse {
   0% {
     opacity: 0.25;
